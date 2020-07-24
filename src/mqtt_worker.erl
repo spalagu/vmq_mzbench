@@ -162,8 +162,8 @@ on_publish(Topic, Payload, _Opts, #mqtt{action=Action} = State) ->
             ClientId = binary_to_list(lists:last(Topic)),
             case vmq_topic:validate_topic(publish, list_to_binary(TopicPrefix ++ ClientId)) of
                 {ok, OutTopic} ->
-                    NewPayload = term_to_binary({os:timestamp(), OrigPayload}),
-                    gen_mqtt:publish(self(), OutTopic, NewPayload, Qos, false),
+                    % NewPayload = term_to_binary({os:timestamp(), OrigPayload}),
+                    gen_mqtt:publish(self(), OutTopic, OrigPayload, Qos, false),
                     mzb_metrics:notify({"mqtt.message.published.total", counter}, 1),
                     {ok, State};
                 {error, Reason} ->
@@ -211,8 +211,8 @@ publish(State, _Meta, Topic, Payload, QoS) ->
 publish(#state{mqtt_fsm = SessionPid} = State, _Meta, Topic, Payload, QoS, Retain) ->
     case vmq_topic:validate_topic(publish, list_to_binary(Topic)) of
         {ok, TTopic} ->
-            % Payload1 = term_to_binary({os:timestamp(), Payload}),
-            gen_mqtt:publish(SessionPid, TTopic, Payload, QoS, Retain),
+            Payload1 = term_to_binary({os:timestamp(), Payload}),
+            gen_mqtt:publish(SessionPid, TTopic, Payload1, QoS, Retain),
             mzb_metrics:notify({"mqtt.message.published.total", counter}, 1),
             {nil, State};
         {error, Reason} ->
