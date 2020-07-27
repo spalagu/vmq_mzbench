@@ -212,7 +212,7 @@ publish(#state{mqtt_fsm = SessionPid} = State, _Meta, Topic, Payload, QoS, Retai
     case vmq_topic:validate_topic(publish, list_to_binary(Topic)) of
         {ok, TTopic} ->
             Payload1 = term_to_binary({os:timestamp(), Payload}),
-            gen_mqtt:publish(SessionPid, TTopic, Payload1, QoS, Retain),
+            gen_mqtt:publish(SessionPid, TTopic, Payload, QoS, Retain),
             mzb_metrics:notify({"mqtt.message.published.total", counter}, 1),
             {nil, State};
         {error, Reason} ->
@@ -328,7 +328,8 @@ stats({publish_out, MsgId, QoS}, State)  ->
     maps:put({outgoing, MsgId}, os:timestamp(), State);
 stats({publish_in, MsgId, Payload, QoS}, State) ->
     T2 = os:timestamp(),
-    {T1, _OldPayload} = binary_to_term(Payload),
+    T1 = os:timestamp(),
+    % {T1, _OldPayload} = binary_to_term(Payload),
     Diff = positive(timer:now_diff(T2, T1)),
     case QoS of
         0 -> mzb_metrics:notify({"mqtt.message.pub_to_sub.latency", histogram}, Diff);
